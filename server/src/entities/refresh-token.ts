@@ -1,24 +1,18 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
-export class User {
+export class RefreshToken {
     @PrimaryGeneratedColumn()
     id: number;
 
     @Column()
-    firstName: string;
+    token: string;
 
     @Column()
-    lastName: string;
+    userId: number;
 
     @Column()
-    email: string;
-
-    @Column()
-    password: string;
-
-    @Column({ default: true })
-    isActive: string;
+    expiryDate: Date;
 
     @Column({ default: new Date() })
     createdAt: Date;
