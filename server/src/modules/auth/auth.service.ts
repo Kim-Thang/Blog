@@ -1,16 +1,17 @@
-import { RefreshTokenRepository } from './../../repositories/refresh-token.repository';
 import {
   BadRequestException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { UserRepository } from './../../repositories/user.repository';
-import { SignupDto } from 'src/dtos/signup.dto';
+
 import * as bcrypt from 'bcrypt';
-import { SignInDto } from 'src/dtos/signin.dto';
 import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
 import { MoreThanOrEqual } from 'typeorm';
+import { UserRepository } from '@repositories/user.repository';
+import { RefreshTokenRepository } from '@repositories/refresh-token.repository';
+import { SignupDto } from '@dtos/signup.dto';
+import { SignInDto } from '@dtos/signin.dto';
 
 @Injectable()
 export class AuthService {
