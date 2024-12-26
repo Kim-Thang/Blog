@@ -3,15 +3,14 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { v4 as uuidv4 } from 'uuid';
 import { MoreThanOrEqual } from 'typeorm';
 import { UserRepository } from '@repositories/user.repository';
 import { RefreshTokenRepository } from '@repositories/refresh-token.repository';
 import { SignupDto } from '@dtos/signup.dto';
 import { SignInDto } from '@dtos/signin.dto';
+import { TOKEN_TYPE } from '@common/constants/token.constant';
 
 @Injectable()
 export class AuthService {
@@ -61,7 +60,7 @@ export class AuthService {
       throw new UnauthorizedException('Password incorrect!');
     }
 
-    return this.createAccessToken(user.id);
+    return this.createToken(user.id);
   }
 
   async refreshToken(refreshToken: string): Promise<{ [key: string]: string }> {
@@ -77,22 +76,26 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token is valid!');
     }
 
-    const newToken = await this.createAccessToken(oldToken.userId);
-
-    await this.refreshTokenRepository.delete({ token: refreshToken });
+    const newToken = await this.createToken(oldToken.userId);
 
     return newToken;
   }
 
-  async createAccessToken(userId: number): Promise<{ [key: string]: string }> {
+  async createToken(userId: number): Promise<{ [key: string]: string }> {
     const accessToken = this.jwtService.sign(
       {
         id: userId,
-        type: 'access_token',
+        type: TOKEN_TYPE.ACCESS_TOKEN,
       },
-      { expiresIn: '1d' },
+      { expiresIn: '1h' },
     );
-    const refreshToken = uuidv4();
+    const refreshToken = this.jwtService.sign(
+      {
+        id: userId,
+        type: TOKEN_TYPE.REFRESH_TOKEN,
+      },
+      { expiresIn: '1h' },
+    );
 
     await this.saveRefreshToken(userId, refreshToken);
 
@@ -103,12 +106,14 @@ export class AuthService {
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + 3);
 
-    const value = this.refreshTokenRepository.create({
-      userId: userId,
-      token: refreshToken,
-      expiryDate: expiryDate,
-    });
-
-    await this.refreshTokenRepository.save(value);
+    await this.refreshTokenRepository.update(
+      {
+        userId,
+      },
+      {
+        token: refreshToken,
+        expiryDate: expiryDate,
+      },
+    );
   }
 }
